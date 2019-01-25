@@ -1,6 +1,0 @@
-{
-    "name": "Tab Tidy",
-    "version": "1.0",
-    "description": "Monitors the user's tab use and decides, based on their usage patterns, when a tab is no longer needed",
-    "manifest_version": 2
-}
