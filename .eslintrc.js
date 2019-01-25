@@ -8,7 +8,8 @@ module.exports = {
       "mocha",
     ],
     "env": {
-      "mocha": true
+      "mocha": true,
+      "webextensions": true
     },
     "rules": {
       "global-require": 0,
