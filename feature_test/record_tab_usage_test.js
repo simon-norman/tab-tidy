@@ -2,7 +2,7 @@ const chai = require('chai');
 const sinonChai = require('sinon-chai');
 const sinon = require('sinon');
 const axios = require('axios');
-const chrome = require('sinon-chrome');
+const mockChrome = require('sinon-chrome');
 const createTabTidyApi = require('../src/tab_tidy_api');
 const createTabRecorder = require('../src/tab_recorder');
 
@@ -20,18 +20,21 @@ describe('Record tab usage', function () {
     stubbedTabPostCalls.returns(Promise.resolve(200));
   };
 
-  before(() => {
-    global.chrome = chrome;
-
-    stubTabPostCalls();
-
+  const setUpTabRecorder = () => {
     mockTabApiConfig = {
       baseUrl: 'fake_tab_api.com',
     };
-
     const tabTidyApi = createTabTidyApi({ tabApiConfig: mockTabApiConfig, axios });
 
     createTabRecorder(tabTidyApi);
+  };
+
+  before(() => {
+    global.chrome = mockChrome;
+
+    stubTabPostCalls();
+
+    setUpTabRecorder();
 
     mockTab1 = { id: 'mock_tab_1' };
     mockTab2 = { id: 'mock_tab_2' };
@@ -43,7 +46,7 @@ describe('Record tab usage', function () {
 
   context('When user opens a new tab', function () {
     it('should post new tab to api', async function () {
-      chrome.tabs.onCreated.dispatch(mockTab1);
+      mockChrome.tabs.onCreated.dispatch(mockTab1);
 
       const newTabPost = stubbedTabPostCalls.firstCall.args[1].variables.input;
       expect(newTabPost.tabId).equals(mockTab1.id);
@@ -53,8 +56,8 @@ describe('Record tab usage', function () {
 
   context('When a tab becomes inactive (because user has clicked on different tab)', function () {
     it('should update api with last inactive timestamp of that tab', async function () {
-      chrome.tabs.onCreated.dispatch(mockTab1);
-      chrome.tabs.onActivated.dispatch(mockTab2);
+      mockChrome.tabs.onCreated.dispatch(mockTab1);
+      mockChrome.tabs.onActivated.dispatch(mockTab2);
 
       const updateTabPost = stubbedTabPostCalls.secondCall.args[1].variables.input;
       expect(updateTabPost.tabId).equals(mockTab1.id);
