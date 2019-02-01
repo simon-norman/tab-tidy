@@ -1,7 +1,7 @@
 const chai = require('chai');
 const sinonChai = require('sinon-chai');
 const sinon = require('sinon');
-const axios = require('axios');
+const createBaseApi = require('../src/base_api');
 const mockChrome = require('sinon-chrome');
 const createTabTidyApi = require('../src/tab_tidy_api');
 const createTabRecorder = require('../src/tab_recorder');
@@ -11,20 +11,18 @@ const { expect } = chai;
 
 describe('Record tab usage', function () {
   let stubbedTabPostCalls;
-  let mockTabApiConfig;
   let mockTab1;
   let mockTab2;
 
-  const stubTabPostCalls = () => {
-    stubbedTabPostCalls = sinon.stub(axios, 'post');
-    stubbedTabPostCalls.returns(Promise.resolve(200));
-  };
+  const setUpTabRecording = () => {
+    const baseApi = createBaseApi({
+      baseURL: 'fake_tab_api.com',
+    });
 
-  const setUpTabRecorder = () => {
-    mockTabApiConfig = {
-      baseUrl: 'fake_tab_api.com',
-    };
-    const tabTidyApi = createTabTidyApi({ tabApiConfig: mockTabApiConfig, axios });
+    stubbedTabPostCalls = sinon.stub(baseApi, 'post');
+    stubbedTabPostCalls.returns(Promise.resolve(200));
+
+    const tabTidyApi = createTabTidyApi({ baseApi });
 
     createTabRecorder(tabTidyApi);
   };
@@ -32,9 +30,7 @@ describe('Record tab usage', function () {
   before(() => {
     global.chrome = mockChrome;
 
-    stubTabPostCalls();
-
-    setUpTabRecorder();
+    setUpTabRecording();
 
     mockTab1 = { id: 'mock_tab_1' };
     mockTab2 = { id: 'mock_tab_2' };

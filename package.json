@@ -27,6 +27,7 @@
     "webpack-cli": "^3.2.1"
   },
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "retry-axios": "^0.4.1"
   }
 }

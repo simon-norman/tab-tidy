@@ -1,5 +1,5 @@
 
-module.exports = ({ tabApiConfig, axios }) => {
+module.exports = ({ baseApi }) => {
   const createTabMutationString = `mutation createTab($input: TabInput) {
     createTab(input: $input) {
     }
@@ -12,8 +12,8 @@ module.exports = ({ tabApiConfig, axios }) => {
 
   return {
     createTab: (tab) => {
-      axios.post(
-        tabApiConfig.baseUrl,
+      baseApi.post(
+        '/',
         {
           query: createTabMutationString,
           variables: { input: tab },
@@ -22,8 +22,8 @@ module.exports = ({ tabApiConfig, axios }) => {
     },
 
     updateTab: (tab) => {
-      axios.post(
-        tabApiConfig.baseUrl,
+      baseApi.post(
+        '/',
         {
           query: updateTabMutationString,
           variables: { input: tab },
