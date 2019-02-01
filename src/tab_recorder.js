@@ -24,4 +24,19 @@ module.exports = (tabTidyApi) => {
 
     activeTabId = tab.id;
   });
+
+  chrome.tabs.onRemoved.addListener((tab) => {
+    const closedTab = {
+      tabId: tab.id,
+      closedTimestamp: new Date().toUTCString(),
+    };
+
+    if (tab.id === activeTabId) {
+      closedTab.lastActiveTimestamp = new Date().toUTCString();
+    }
+
+    tabTidyApi.updateTab(closedTab);
+
+    activeTabId = undefined;
+  });
 };
