@@ -3,42 +3,54 @@
 module.exports = (tabTidyApi) => {
   let activeTabId
 
+  const createTab = (tabId) => {
+    const newTab = {
+      tabId,
+      createdTimestamp: new Date().toISOString(),
+    }
+    tabTidyApi.createTab(newTab)
+  }
+
   chrome.tabs.onCreated.addListener((tab) => {
     activeTabId = tab.id
 
-    const newTab = {
-      tabId: tab.id,
-      createdTimestamp: new Date().toISOString(),
-    }
-
-    tabTidyApi.createTab(newTab)
+    createTab(activeTabId)
   })
+
+  const updateTab = (tabId) => {
+    const inactiveTab = {
+      tabId,
+      lastActiveTimestamp: new Date().toISOString(),
+    }
+    tabTidyApi.updateTab(inactiveTab)
+  }
 
   chrome.tabs.onActivated.addListener((tab) => {
     if (activeTabId) {
-      const inactiveTab = {
-        tabId: activeTabId,
-        lastActiveTimestamp: new Date().toISOString(),
-      }
+      updateTab(activeTabId)
 
-      tabTidyApi.updateTab(inactiveTab)
-
-      activeTabId = tab.tabId
+      activeTabId = tab.id
     }
   })
 
-  chrome.tabs.onRemoved.addListener((tab) => {
+  const closeTab = (tabId) => {
     const closedTab = {
-      tabId: tab.tabId,
+      tabId,
       closedTimestamp: new Date().toISOString(),
     }
 
-    if (tab.tabId === activeTabId) {
+    if (tabId === activeTabId) {
       closedTab.lastActiveTimestamp = new Date().toISOString()
     }
 
     tabTidyApi.updateTab(closedTab)
+  }
 
-    activeTabId = undefined
+  chrome.tabs.onRemoved.addListener((tab) => {
+    closeTab(tab.tabId)
+
+    if (tab.tabId === activeTabId) {
+      activeTabId = undefined
+    }
   })
 }
