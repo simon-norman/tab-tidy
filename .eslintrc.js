@@ -20,6 +20,8 @@ module.exports = {
       "no-unused-expressions": 0,
       "no-underscore-dangle": 0,
       "prefer-arrow-callback": 0,
+      "linebreak-style": 0,
+      "semi": ["error", "never"],
       "prefer-rest-params": 0,
       "no-param-reassign": 0,
       "no-restricted-globals": 0,

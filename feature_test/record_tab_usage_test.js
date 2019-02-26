@@ -1,89 +1,74 @@
-const chai = require('chai');
-const sinonChai = require('sinon-chai');
-const sinon = require('sinon');
-const createBaseApi = require('../src/base_api');
-const mockChrome = require('sinon-chrome');
-const createTabTidyApi = require('../src/tab_tidy_api');
-const createTabRecorder = require('../src/tab_recorder');
+const chai = require('chai')
+const sinonChai = require('sinon-chai')
+const sinon = require('sinon')
+const createMockChrome = require('./chrome_mock')
+const isTimestamp = require('./is_timestamp_helper')
+const createTabRecording = require('./test_app_factory')
 
-chai.use(sinonChai);
-const { expect } = chai;
+chai.use(sinonChai)
+const { expect } = chai
 
 describe('Record tab usage', function () {
-  let stubbedTabPostCalls;
-  let mockTab1;
-  let mockTab2;
-
-  const setUpTabRecording = () => {
-    const baseApi = createBaseApi({
-      baseURL: 'fake_tab_api.com',
-    });
-
-    stubbedTabPostCalls = sinon.stub(baseApi, 'post');
-    stubbedTabPostCalls.returns(Promise.resolve(200));
-
-    const tabTidyApi = createTabTidyApi({ baseApi });
-
-    createTabRecorder(tabTidyApi);
-  };
+  let stubbedTabPost
+  let tab1
+  let tab2
+  let closedTab
+  let mockChrome
 
   before(() => {
-    global.chrome = mockChrome;
-  });
+    mockChrome = createMockChrome()
+  })
 
   beforeEach(() => {
-    setUpTabRecording();
+    ({ stubbedTabPost } = createTabRecording())
 
-    mockTab1 = { id: 'mock_tab_1' };
-    mockTab2 = { id: 'mock_tab_2' };
+    tab1 = { id: 'tab_1' }
+    tab2 = { id: 'tab_2' }
 
-    sinon.resetHistory();
-  });
+    mockChrome.createTab(tab1)
+  })
 
-  context('When user opens a new tab', function () {
+  describe('When user opens a new tab', function () {
     it('should post new tab to api', async function () {
-      mockChrome.tabs.onCreated.dispatch(mockTab1);
+      const { tabId, createdTimestamp } = stubbedTabPost.firstCall.args[1].variables.CreateTabInput
 
-      const newTabPost = stubbedTabPostCalls.firstCall.args[1].variables.input;
-      expect(newTabPost.tabId).equals(mockTab1.id);
-      expect(newTabPost.createdTimestamp).is.not.empty;
-    });
-  });
+      expect(tabId).equals(tab1.id)
+      expect(isTimestamp(createdTimestamp)).to.be.true
+    })
+  })
 
-  context('When a tab becomes inactive (because user has clicked on different tab)', function () {
-    it('should update api with last active timestamp of that tab', async function () {
-      mockChrome.tabs.onCreated.dispatch(mockTab1);
+  context('Given a tab is active', function () {
+    it('should, if becomes inactive, update api with last active timestamp of that tab', async function () {
+      mockChrome.changeTab(tab2)
 
-      expect(stubbedTabPostCalls.secondCall).to.be.null;
+      const { tabId, lastActiveTimestamp }
+        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
-      mockChrome.tabs.onActivated.dispatch(mockTab2);
+      expect(tabId).equals(tab1.id)
+      expect(lastActiveTimestamp).is.not.empty
+    })
 
-      const updateTabPost = stubbedTabPostCalls.secondCall.args[1].variables.input;
-      expect(updateTabPost.tabId).equals(mockTab1.id);
-      expect(updateTabPost.lastActiveTimestamp).is.not.empty;
-    });
-  });
+    it('should, if tab is closed, update api with last active and closed timestamps', async function () {
+      mockChrome.closeTab(tab1)
 
-  context('When tab is closed,', function () {
-    it('should update api with closed timestamp', async function () {
-      mockChrome.tabs.onRemoved.dispatch(mockTab1);
+      const { closedTimestamp, lastActiveTimestamp }
+        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
-      const updateTabPost = stubbedTabPostCalls.firstCall.args[1].variables.input;
-      expect(updateTabPost.tabId).equals(mockTab1.id);
-      expect(updateTabPost.closedTimestamp).is.not.empty;
-    });
+      expect(lastActiveTimestamp).is.not.empty
+      expect(closedTimestamp).is.not.empty
+    })
+  })
 
-    context('and the closed tab was active', function () {
-      it('should include last active timestamp in post call', async function () {
-        mockChrome.tabs.onActivated.dispatch(mockTab1);
+  context('Given tab is inactive,', function () {
+    it('should, if tab is closed, update api with JUST closed timestamp', async function () {
+      mockChrome.closeTab(tab2)
 
-        expect(stubbedTabPostCalls.secondCall).to.be.null;
+      const { closedTimestamp, lastActiveTimestamp, tabId }
+        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
-        mockChrome.tabs.onRemoved.dispatch(mockTab1);
-
-        const updateTabPost = stubbedTabPostCalls.secondCall.args[1].variables.input;
-        expect(updateTabPost.lastActiveTimestamp).is.not.empty;
-      });
-    });
-  });
-});
+      expect(tabId).equals(tab2.id)
+      expect(closedTimestamp).is.not.empty
+      expect(lastActiveTimestamp).is.undefined
+    })
+  })
+})

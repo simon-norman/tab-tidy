@@ -6,7 +6,7 @@ module.exports = ({ baseApi }) => {
         tabId
       }
     }
-  }`;
+  }`
 
   const updateTabMutationString = `mutation UpdateTab($UpdateTabInput: UpdateTabInput!) {
     updateTab(updateTabInput: $UpdateTabInput) {
@@ -14,7 +14,7 @@ module.exports = ({ baseApi }) => {
         tabId
       }
     }
-  }`;
+  }`
 
   return {
     createTab: async (tab) => {
@@ -24,7 +24,7 @@ module.exports = ({ baseApi }) => {
           query: createTabMutationString,
           variables: { CreateTabInput: tab },
         },
-      );
+      )
     },
 
     updateTab: async (tab) => {
@@ -35,11 +35,11 @@ module.exports = ({ baseApi }) => {
             query: updateTabMutationString,
             variables: { UpdateTabInput: tab },
           },
-        );
+        )
       } catch (error) {
-        console.log(error.response);
+        console.log(error.response)
       }
     },
-  };
-};
+  }
+}
 
