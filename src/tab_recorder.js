@@ -15,14 +15,16 @@ module.exports = (tabTidyApi) => {
   })
 
   chrome.tabs.onActivated.addListener((tab) => {
-    const inactiveTab = {
-      tabId: activeTabId,
-      lastActiveTimestamp: new Date().toISOString(),
+    if (activeTabId) {
+      const inactiveTab = {
+        tabId: activeTabId,
+        lastActiveTimestamp: new Date().toISOString(),
+      }
+
+      tabTidyApi.updateTab(inactiveTab)
+
+      activeTabId = tab.tabId
     }
-
-    tabTidyApi.updateTab(inactiveTab)
-
-    activeTabId = tab.tabId
   })
 
   chrome.tabs.onRemoved.addListener((tab) => {

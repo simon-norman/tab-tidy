@@ -12,7 +12,6 @@ describe('Record tab usage', function () {
   let stubbedTabPost
   let tab1
   let tab2
-  let closedTab
   let mockChrome
 
   before(() => {
@@ -38,21 +37,32 @@ describe('Record tab usage', function () {
   })
 
   context('Given a tab is active', function () {
-    it('should, if becomes inactive, update api with last active timestamp of that tab', async function () {
-      mockChrome.changeTab(tab2)
+    context('And that the tab ID has been stored in the tab recorder', function () {
+      it('should, when becomes inactive, update api with last active timestamp of that tab', async function () {
+        mockChrome.changeTab(tab2)
 
-      const { tabId, lastActiveTimestamp }
-        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
+        const { tabId, lastActiveTimestamp }
+          = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
-      expect(tabId).equals(tab1.id)
-      expect(lastActiveTimestamp).is.not.empty
+        expect(tabId).equals(tab1.id)
+        expect(lastActiveTimestamp).is.not.empty
+      })
+    })
+
+    context('And that the tab ID has NOT been stored in the tab recorder', function () {
+      it('should NOT, if becomes inactive, update api', async function () {
+        mockChrome.changeTab({ id: undefined })
+        mockChrome.changeTab(tab2)
+
+        expect(stubbedTabPost.callCount).equals(2)
+      })
     })
 
     it('should, if tab is closed, update api with last active and closed timestamps', async function () {
       mockChrome.closeTab(tab1)
 
       const { closedTimestamp, lastActiveTimestamp }
-        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
+          = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
       expect(lastActiveTimestamp).is.not.empty
       expect(closedTimestamp).is.not.empty
@@ -64,7 +74,7 @@ describe('Record tab usage', function () {
       mockChrome.closeTab(tab2)
 
       const { closedTimestamp, lastActiveTimestamp, tabId }
-        = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
+          = stubbedTabPost.secondCall.args[1].variables.UpdateTabInput
 
       expect(tabId).equals(tab2.id)
       expect(closedTimestamp).is.not.empty
