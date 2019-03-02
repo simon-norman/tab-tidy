@@ -70,6 +70,18 @@ describe('Record tab usage', function () {
   })
 
   context('Given tab is inactive,', function () {
+    it('should, if becomes active, update api with inactive period start and end times', async function () {
+      mockChrome.changeTab(tab2)
+      mockChrome.changeTab(tab1)
+
+      const { activeTimestamp, inactiveTimestamp, tabId }
+          = stubbedTabPost.thirdCall.args[1].variables.CreateInactiveRecInput
+
+      expect(tabId).equals(tab1.id)
+      expect(activeTimestamp).is.not.empty
+      expect(inactiveTimestamp).is.undefined
+    })
+
     it('should, if tab is closed, update api with JUST closed timestamp', async function () {
       mockChrome.closeTab(tab2)
 

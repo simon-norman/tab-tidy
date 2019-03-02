@@ -25,6 +25,16 @@ module.exports = (tabTidyApi) => {
     tabTidyApi.updateTab(inactiveTab)
   }
 
+  
+  const createInactiveRec = (tabId, inactiveTimestamp) => {
+    const inactiveTab = {
+      tabId,
+      inactiveTimestamp,
+      activeTimestamp: new Date().toISOString(),
+    }
+    tabTidyApi.createInactiveRec(inactiveTab)
+  }
+
   chrome.tabs.onActivated.addListener((tab) => {
     if (activeTabId) {
       updateTab(activeTabId)

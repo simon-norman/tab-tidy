@@ -1,27 +1,33 @@
 
 module.exports = ({ baseApi }) => {
-  const createTabMutationString = `mutation CreateTab($CreateTabInput: CreateTabInput!) {
-    createTab(createTabInput: $CreateTabInput) {
-      tab {
-        tabId
+  const tabMutationString = (action) => {
+    const actionLower = action.toLowerCase()
+    return `mutation ${actionLower}Tab($${action}TabInput: ${action}TabInput!) {
+      ${actionLower}Tab(${actionLower}TabInput: ${action}TabInput) {
+        tab {
+          tabId
+        }
       }
-    }
-  }`
+    }`
+  }
 
-  const updateTabMutationString = `mutation UpdateTab($UpdateTabInput: UpdateTabInput!) {
-    updateTab(updateTabInput: $UpdateTabInput) {
-      tab {
-        tabId
+  const inactiveRecMutationString = (action) => {
+    const actionLower = action.toLowerCase()
+    return `mutation ${actionLower}InactiveRec($${action}InactiveRecInput: ${action}InactiveRecInput!) {
+      ${actionLower}InactiveRec(${actionLower}InactiveRecInput: ${action}InactiveRecInput) {
+        inactiveRec {
+          id
+        }
       }
-    }
-  }`
+    }`
+  }
 
   return {
     createTab: async (tab) => {
       await baseApi.post(
         '',
         {
-          query: createTabMutationString,
+          query: tabMutationString('Create'),
           variables: { CreateTabInput: tab },
         },
       )
@@ -32,8 +38,22 @@ module.exports = ({ baseApi }) => {
         await baseApi.post(
           '',
           {
-            query: updateTabMutationString,
+            query: tabMutationString('Update'),
             variables: { UpdateTabInput: tab },
+          },
+        )
+      } catch (error) {
+        console.log(error.response)
+      }
+    },
+
+    createInactiveRec: async (inactiveRec) => {
+      try {
+        await baseApi.post(
+          '',
+          {
+            query: inactiveRecMutationString('Create'),
+            variables: { InactiveRecInput: inactiveRec },
           },
         )
       } catch (error) {
