@@ -1,5 +1,5 @@
 const createTabTidyApi = require('../src/tab_tidy_api')
-const createTabRecorder = require('../src/tab_recorder')
+const createTabRecorder = require('../src/tab')
 const createBaseApi = require('../src/base_api')
 const sinon = require('sinon')
 

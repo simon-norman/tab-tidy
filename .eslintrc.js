@@ -26,6 +26,7 @@ module.exports = {
       "no-param-reassign": 0,
       "no-restricted-globals": 0,
       "no-continue": 0,
+      "object-shorthand"
       "class-methods-use-this": 0,
       "mocha/prefer-arrow-callback": 2,
       "func-names": 0,

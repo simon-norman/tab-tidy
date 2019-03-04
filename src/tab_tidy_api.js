@@ -53,7 +53,7 @@ module.exports = ({ baseApi }) => {
           '',
           {
             query: inactiveRecMutationString('Create'),
-            variables: { InactiveRecInput: inactiveRec },
+            variables: { CreateInactiveRecInput: inactiveRec },
           },
         )
       } catch (error) {
