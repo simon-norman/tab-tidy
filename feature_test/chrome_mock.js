@@ -9,7 +9,7 @@ module.exports = () => {
       mockChrome.tabs.onCreated.dispatch(newTab)
     },
 
-    createThenSelectNewTab(newTab) {
+    createThenActivateNewTab(newTab) {
       this.createTab(newTab)
       this.changeTab(newTab)
     },
