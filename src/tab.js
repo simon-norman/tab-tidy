@@ -1,6 +1,6 @@
 module.exports = (tabTidyApi) => {
   const tabs = []
-  
+
   const Tab = class Tab {
     constructor({ tabId }) {
       const currentDateTime = new Date().toISOString()
@@ -27,13 +27,13 @@ module.exports = (tabTidyApi) => {
     }
 
     static changeActiveTab({ newActiveTabId }) {
-      try {
+      if (Tab.currentActiveTab()) {
         Tab.currentActiveTab().setInactive()
-      } catch(error) {
-        console.log(error)
-      } 
+      }
 
-      Tab.getTab(newActiveTabId).setActive()
+      if (Tab.getTab(newActiveTabId)) {
+        Tab.getTab(newActiveTabId).setActive()
+      }
     }
 
     setInactive() {
@@ -79,6 +79,9 @@ module.exports = (tabTidyApi) => {
   })
 
   chrome.tabs.onRemoved.addListener((tab) => {
-    Tab.getTab(tab.tabId).close()
+    const closingTab = Tab.getTab(tab.tabId)
+    if (closingTab) {
+      closingTab.close()
+    }
   })
 }

@@ -22,11 +22,6 @@ describe('Record tab usage', function () {
 
     tab1 = { id: 'tab_1' }
     tab2 = { id: 'tab_2' }
-
-    mockChrome.createThenActivateNewTab(tab1)
-    mockChrome.createThenActivateNewTab(tab2)
-
-    stubbedTabPost.resetHistory()
   })
 
   describe('When user opens a new tab', function () {
@@ -39,50 +34,72 @@ describe('Record tab usage', function () {
     })
   })
 
-  context('Given a tab is active', function () {
-    it('should, when becomes inactive, update api with last active timestamp of that tab', async function () {
-      mockChrome.changeTab(tab1)
+  context('Given a tab exists within app (IE user created tab after app loaded)', function () {
+    beforeEach(() => {
+      mockChrome.createThenActivateNewTab(tab1)
+      mockChrome.createThenActivateNewTab(tab2)
 
-      const { tabId, lastActiveTimestamp }
-        = stubbedTabPost.firstCall.args[1].variables.UpdateTabInput
-
-      expect(tabId).equals(tab2.id)
-      expect(lastActiveTimestamp).is.not.empty
+      stubbedTabPost.resetHistory()
     })
 
-    it('should, if tab is closed, update api with last active and closed timestamps', async function () {
-      mockChrome.closeTab(tab2)
+    context('And that tab is active', function () {
+      it('should, when becomes inactive, update api with last active timestamp of that tab', async function () {
+        mockChrome.changeTab(tab1)
 
-      const { closedTimestamp, lastActiveTimestamp }
+        const { tabId, lastActiveTimestamp }
           = stubbedTabPost.firstCall.args[1].variables.UpdateTabInput
 
-      expect(lastActiveTimestamp).is.not.empty
-      expect(closedTimestamp).is.not.empty
+        expect(tabId).equals(tab2.id)
+        expect(lastActiveTimestamp).is.not.empty
+      })
+
+      it('should, if tab is closed, update api with last active and closed timestamps', async function () {
+        mockChrome.closeTab(tab2)
+
+        const { closedTimestamp, lastActiveTimestamp }
+            = stubbedTabPost.firstCall.args[1].variables.UpdateTabInput
+
+        expect(lastActiveTimestamp).is.not.empty
+        expect(closedTimestamp).is.not.empty
+      })
+    })
+
+    context('And that tab is inactive,', function () {
+      it('should, if becomes active, update api with inactive period start and end times', async function () {
+        mockChrome.changeTab(tab1)
+
+        const { activeTimestamp, inactiveTimestamp, tabId }
+            = stubbedTabPost.secondCall.args[1].variables.CreateInactiveRecInput
+
+        expect(tabId).equals(tab1.id)
+        expect(isTimestamp(inactiveTimestamp)).to.be.true
+        expect(isTimestamp(activeTimestamp)).to.be.true
+      })
+
+      it('should, if tab is closed, update api with JUST closed timestamp', async function () {
+        mockChrome.closeTab(tab1)
+
+        const { closedTimestamp, lastActiveTimestamp, tabId }
+            = stubbedTabPost.firstCall.args[1].variables.UpdateTabInput
+
+        expect(tabId).equals(tab1.id)
+        expect(closedTimestamp).is.not.empty
+        expect(lastActiveTimestamp).is.undefined
+      })
     })
   })
 
-  context('Given tab is inactive,', function () {
-    it('should, if becomes active, update api with inactive period start and end times', async function () {
-      mockChrome.changeTab(tab1)
+  context('Given a tab does NOT exist in app (IE user created it before app loaded)', function () {
+    it('should not, if becomes active, instruct the api to record it', async function () {
+      mockChrome.changeTab({ id: 'tab3' })
 
-      const stuff = 1
-      const { activeTimestamp, inactiveTimestamp, tabId }
-          = stubbedTabPost.secondCall.args[1].variables.CreateInactiveRecInput
-
-      expect(tabId).equals(tab1.id)
-      expect(isTimestamp(inactiveTimestamp)).to.be.true
-      expect(isTimestamp(activeTimestamp)).to.be.true
+      expect(stubbedTabPost.callCount).equals(0)
     })
 
-    it('should, if tab is closed, update api with JUST closed timestamp', async function () {
-      mockChrome.closeTab(tab1)
+    it('should not, if it is closed, inform api it is closed', async function () {
+      mockChrome.closeTab({ id: 'tab3' })
 
-      const { closedTimestamp, lastActiveTimestamp, tabId }
-          = stubbedTabPost.firstCall.args[1].variables.UpdateTabInput
-
-      expect(tabId).equals(tab1.id)
-      expect(closedTimestamp).is.not.empty
-      expect(lastActiveTimestamp).is.undefined
+      expect(stubbedTabPost.callCount).equals(0)
     })
   })
 })
